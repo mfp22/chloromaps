@@ -5,6 +5,8 @@ import { AppProps } from 'next/app';
 import { DefaultSeo } from 'next-seo';
 import { GeistProvider, CssBaseline } from '@geist-ui/react';
 import { useAtom, Provider } from 'jotai';
+import { AdaptContext } from '@state-adapt/react';
+import { stateadapt } from 'stateadapt';
 import { themeAtom } from '@/store/theme.store';
 import '../styles/main.css';
 import 'inter-ui/inter.css';
@@ -13,7 +15,7 @@ import SEO from '../next-seo.config';
 import * as gtag from '../lib/gtag';
 
 const Application: NextPage<AppProps<{}>> = ({ Component, pageProps }) => {
-    const [theme, setTheme] = useAtom(themeAtom);
+    const [theme, setTheme] = useAtom(themeAtom); // setTheme unused
     const switchThemes = () => {
         setTheme(!theme);
     };
@@ -28,13 +30,15 @@ const Application: NextPage<AppProps<{}>> = ({ Component, pageProps }) => {
         };
     }, [router.events]);
     return (
-        <Provider>
-            <DefaultSeo {...SEO} />
-            <GeistProvider themeType={theme ? 'dark' : 'light'}>
-                <CssBaseline />
-                <Component {...pageProps} toggleTheme={switchThemes} />
-            </GeistProvider>
-        </Provider>
+        <AdaptContext.Provider value={stateadapt}>
+            <Provider>
+                <DefaultSeo {...SEO} />
+                <GeistProvider themeType={theme ? 'dark' : 'light'}>
+                    <CssBaseline />
+                    <Component {...pageProps} toggleTheme={switchThemes} />
+                </GeistProvider>
+            </Provider>
+        </AdaptContext.Provider>
     );
 };
 
