@@ -1,3 +1,3 @@
-import { atom } from 'jotai'
+import { atom } from 'jotai';
 
-export const themeAtom = atom<Boolean>(true)
+export const themeAtom = atom<Boolean>(true);
