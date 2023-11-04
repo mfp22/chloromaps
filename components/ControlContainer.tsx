@@ -1,14 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { colorPickerPalette } from '@/data/colors';
 import getColorUsed from '@/lib/getColorUsed';
-import resetFullMap from '@/lib/resetFullMap';
 import uploadConfig from '@/lib/uploadConfig';
-import { labelAtom } from '@/store/label.store';
-import { disableTooltip, mapAtom } from '@/store/map.store';
-import { LegendData, MapData, MapStoreType } from '@/typings/map.store';
+import { labelStore } from '@/store/label.store';
+import { disableTooltipStore, mapStore, randomizeData$, refreshMap$ } from '@/store/map.store';
 import { Spacer, Tabs, Toggle, useToasts } from '@geist-ui/react';
 import { Edit, Upload, Type } from '@geist-ui/react-icons';
-import { useAtom } from 'jotai';
+import { useStore } from '@state-adapt/react';
 import React from 'react';
 import EditControls from './Controls/EditControls';
 import ExportControls from './Controls/ExportControls';
@@ -24,80 +21,10 @@ interface Props {
 }
 
 const ControlContainer: React.FC<Props> = ({ mapId, stateCodes, hideWaterBodies }) => {
-    const [map, setMap] = useAtom(mapAtom);
-    const [label, setLabel] = useAtom(labelAtom);
-    const [, setTooltip] = useAtom(disableTooltip);
+    const map = useStore(mapStore);
+    const label = useStore(labelStore);
     const [, setToast] = useToasts();
-    const handleAttrChange = (v: string, a: string) => {
-        setMap((st: MapStoreType) => ({
-            ...st,
-            [a]: v
-        }));
-    };
-    const randomiseData = () => {
-        const colorIdx = Math.floor(Math.random() * colorPickerPalette.length);
-        const legendData: LegendData[] = [];
-        colorPickerPalette[colorIdx].forEach((t, i) =>
-            legendData.push({ fill: t, text: `${i * 10}`, hide: false })
-        );
-        const mapData: MapData[] = [];
-        Object.keys(stateCodes).forEach((m) => {
-            const rand = Math.floor(Math.random() * 10);
-            mapData.push({
-                fill: colorPickerPalette[colorIdx][rand],
-                code: m,
-                hide: false
-            });
-        });
-
-        setMap((st: MapStoreType) => ({
-            ...st,
-            mapData,
-            legendData
-        }));
-    };
-    const toggleHideLegend = (b: any) => {
-        setMap((st: MapStoreType) => ({
-            ...st,
-            hideLegend: b
-        }));
-    };
-    const smoothGradient = (v: any) => {
-        setMap((st: MapStoreType) => ({
-            ...st,
-            legendSmoothGradient: v
-        }));
-    };
-    const toggleSource = (v: any) => {
-        setMap((st: MapStoreType) => ({
-            ...st,
-            hideSource: v
-        }));
-    };
-    const refreshMap = () => {
-        resetFullMap(stateCodes);
-
-        setMap((st: MapStoreType) => ({
-            ...st,
-            mapStrokeWidth: '1',
-            mapStrokeColor: 'white',
-            defaultFillColor: 'black',
-            legendData: [],
-            mapData: [],
-            legendTextColor: 'white',
-            hideLegend: false,
-            legendSmoothGradient: false
-        }));
-
-        setLabel({
-            data: [],
-            scalingFactor: 1
-        });
-        const el = document.getElementById('labels-container');
-        if (el) {
-            el.innerHTML = '';
-        }
-    };
+    const setAttr = (v: any, attr: string) => mapStore.setAttr({ attr, v });
     const uploadDataConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
         const successToast = () =>
             setToast({
@@ -113,8 +40,8 @@ const ControlContainer: React.FC<Props> = ({ mapId, stateCodes, hideWaterBodies 
             });
         uploadConfig(
             e.target.files![0],
-            setMap,
-            setLabel,
+            mapStore.set,
+            labelStore.set,
             map.defaultFillColor,
             mapId,
             successToast,
@@ -135,10 +62,10 @@ const ControlContainer: React.FC<Props> = ({ mapId, stateCodes, hideWaterBodies 
                         value="1">
                         <div className="control-box">
                             <EditControls
-                                map={map}
-                                handleAttrChange={handleAttrChange}
-                                randomiseData={randomiseData}
-                                refreshMap={refreshMap}
+                                map={map.state}
+                                handleAttrChange={setAttr}
+                                randomiseData={() => randomizeData$.next(stateCodes)}
+                                refreshMap={() => refreshMap$.next(stateCodes)}
                                 uploadDataConfig={uploadDataConfig}
                             />
                             {hideWaterBodies ? (
@@ -160,7 +87,7 @@ const ControlContainer: React.FC<Props> = ({ mapId, stateCodes, hideWaterBodies 
                             <Spacer y={0.7} />
                             <InputLabel text="Disable Tooltip" />
                             <Toggle
-                                onChange={(e: any) => setTooltip(e.target.checked)}
+                                onChange={(e: any) => disableTooltipStore.set(e.target.checked)}
                                 size="large"
                             />
                             <Spacer y={0.7} />
@@ -168,11 +95,11 @@ const ControlContainer: React.FC<Props> = ({ mapId, stateCodes, hideWaterBodies 
                                 <Tabs.Item label="Legend" value="1">
                                     <LegendAllControls
                                         uniquePalette={uniquePalette}
-                                        map={map}
-                                        handleAttrChange={handleAttrChange}
-                                        toggleHideLegend={toggleHideLegend}
-                                        smoothGradient={smoothGradient}
-                                        toggleSource={toggleSource}
+                                        map={map.state}
+                                        handleAttrChange={setAttr}
+                                        toggleHideLegend={mapStore.toggleHideLegend}
+                                        smoothGradient={mapStore.setLegendSmoothGradient}
+                                        toggleSource={mapStore.setHideSource}
                                     />
                                 </Tabs.Item>
                                 <Tabs.Item label="Labels" value="2">
@@ -189,7 +116,7 @@ const ControlContainer: React.FC<Props> = ({ mapId, stateCodes, hideWaterBodies 
                         }
                         value="3">
                         <div className="control-box">
-                            <ExportControls map={map} label={label} mapId={mapId} />
+                            <ExportControls map={map.state} label={label} mapId={mapId} />
                         </div>
                     </Tabs.Item>
                 </Tabs>

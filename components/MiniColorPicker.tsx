@@ -4,6 +4,7 @@
 /* eslint-disable-next-line jsx-a11y/no-static-element-interactions */
 import { colorPickerPalette } from '@/data/colors';
 import getColorUsed from '@/lib/getColorUsed';
+import { mapStore } from '@/store/map.store';
 import { MapStoreType } from '@/typings/map.store';
 import { useTheme } from '@geist-ui/react';
 import React from 'react';
@@ -11,29 +12,14 @@ import React from 'react';
 interface Props {
     bgColor: string;
     map: MapStoreType;
-    setMap: React.Dispatch<React.SetStateAction<MapStoreType>>;
+    changeColor: typeof mapStore.changeColor;
     index: number;
 }
 
-const MiniColorPicker: React.FC<Props> = ({ index, bgColor, map, setMap }) => {
+const MiniColorPicker: React.FC<Props> = ({ index, bgColor, map, changeColor }) => {
     const theme = useTheme();
     const uniquePalette: string[] = getColorUsed(map.mapData);
     const [open, setOpen] = React.useState<boolean>(false);
-    const handleColor = (v: string) => {
-        const copy = map.mapData;
-        copy.forEach((el) => {
-            if (el.fill === bgColor) {
-                el.fill = v;
-            }
-        });
-        const legendDataCopy = map.legendData;
-        legendDataCopy[index].fill = v;
-        setMap((prev: MapStoreType) => ({
-            ...prev,
-            legendData: legendDataCopy,
-            mapData: copy
-        }));
-    };
     return (
         <>
             <div
@@ -47,7 +33,7 @@ const MiniColorPicker: React.FC<Props> = ({ index, bgColor, map, setMap }) => {
                                 <div key={`${d[i]}-${i}`} className="flex justify-evenly">
                                     {d.map((el) => (
                                         <div
-                                            onClick={() => handleColor(el)}
+                                            onClick={() => changeColor({ v: el, bgColor, index })}
                                             key={el}
                                             style={{ backgroundColor: el }}
                                             className={`palette-box ${

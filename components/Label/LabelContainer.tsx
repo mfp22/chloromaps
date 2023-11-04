@@ -1,24 +1,20 @@
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import { labelAtom } from '@/store/label.store';
-import { LabelStoreType } from '@/typings/label.store';
+import { labelStore } from '@/store/label.store';
 import { Input, useTheme } from '@geist-ui/react';
 import { EyeOff, Eye, XCircle } from '@geist-ui/react-icons';
-import { useAtom } from 'jotai';
+import { useStore } from '@state-adapt/react';
 import React from 'react';
 import InputLabel from '../InputLabel';
 import MiniLabelColorPicker from './MiniLabelColorPicker';
 
 const LabelContainer: React.FC = () => {
     const theme = useTheme();
-    const [label, setLabel] = useAtom(labelAtom);
+    const label = useStore(labelStore);
     const removeLabel = (i: number) => {
         label.data.splice(i, 1);
-        setLabel((st: LabelStoreType) => ({
-            ...st,
-            data: label.data
-        }));
+        labelStore.setData(label.state.data);
         const textNode = document.getElementById(`label-text-${i + 1}`);
         if (textNode) {
             textNode.remove();
@@ -28,10 +24,7 @@ const LabelContainer: React.FC = () => {
         const copy = label.data;
         const obj = copy[i];
         obj.hide = !obj.hide;
-        setLabel((st: LabelStoreType) => ({
-            ...st,
-            data: copy
-        }));
+        labelStore.setData(copy);
         const textNode = document.getElementById(`label-text-${i + 1}`);
         if (textNode) {
             textNode.style.opacity = obj.hide ? '0' : '1';
@@ -41,10 +34,7 @@ const LabelContainer: React.FC = () => {
         const copy = label.data;
         copy[i].text = v;
 
-        setLabel((st: LabelStoreType) => ({
-            ...st,
-            data: copy
-        }));
+        labelStore.setData(copy);
         const textNode = document.getElementById(`label-text-${i + 1}`);
         if (textNode) {
             textNode.innerHTML = v;

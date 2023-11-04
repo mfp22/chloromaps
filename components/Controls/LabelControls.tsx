@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import { labelAtom } from '@/store/label.store';
-import { LabelStoreType, LabelType } from '@/typings/label.store';
+import { labelStore } from '@/store/label.store';
+import { LabelType } from '@/typings/label.store';
 import { Input, Spacer } from '@geist-ui/react';
-import { useAtom } from 'jotai';
+import { useStore } from '@state-adapt/react';
 import React from 'react';
 import { PlusSquare } from '@geist-ui/react-icons';
 
@@ -12,7 +12,7 @@ import InputLabel from '../InputLabel';
 import LabelContainer from '../Label/LabelContainer';
 
 const LabelControls = () => {
-    const [label, setLabel] = useAtom(labelAtom);
+    const label = useStore(labelStore);
     const [text, setText] = React.useState('');
     const addLabel = () => {
         if (text !== '') {
@@ -36,10 +36,7 @@ const LabelControls = () => {
                 const newArr = label.data;
                 newArr.push(labObj);
 
-                setLabel((st: LabelStoreType) => ({
-                    ...st,
-                    data: newArr
-                }));
+                labelStore.setData(newArr);
                 setText('');
             }
         }

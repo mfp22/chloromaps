@@ -1,11 +1,9 @@
 /* eslint-disable prefer-destructuring */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { colorPickerPalette } from '@/data/colors';
 import { WorldCountryCodes } from '@/data/World/WorldCountryCodes';
 import fillAllMap from '@/lib/fillAllMap';
-import { mapAtom } from '@/store/map.store';
-import { LegendData, MapData, MapStoreType } from '@/typings/map.store';
-import { useAtom } from 'jotai';
+import { mapStore, randomizeData$ } from '@/store/map.store';
+import { useStore } from '@state-adapt/react';
 import { useRouter } from 'next/router';
 import React from 'react';
 import ReactTooltip from 'react-tooltip';
@@ -14,36 +12,10 @@ import { mapDt } from './MapShowContainer';
 const LandingWorldMap = () => {
     const router = useRouter();
     const [hover, setHover] = React.useState('');
-    const [map, setMap] = useAtom(mapAtom);
+    const map = useStore(mapStore);
     React.useMemo(() => {
         fillAllMap(map.mapData, map.defaultFillColor);
-    }, [map]);
-    const randomiseData = () => {
-        const colorIdx = Math.floor(Math.random() * colorPickerPalette.length);
-        const grad = document.getElementById('grad-text');
-        if (grad) {
-            grad.style.color = colorPickerPalette[colorIdx][5];
-        }
-        const legendData: LegendData[] = [];
-        colorPickerPalette[colorIdx].forEach((t, i) =>
-            legendData.push({ fill: t, text: `${i * 10}`, hide: false })
-        );
-        const mapData: MapData[] = [];
-        Object.keys(WorldCountryCodes).forEach((m) => {
-            const rand = Math.floor(Math.random() * 10);
-            mapData.push({
-                fill: colorPickerPalette[colorIdx][rand],
-                code: m,
-                hide: false
-            });
-        });
-
-        setMap((st: MapStoreType) => ({
-            ...st,
-            legendData,
-            mapData
-        }));
-    };
+    }, [map.mapData, map.defaultFillColor]);
     const intervalRef = React.useRef<undefined | NodeJS.Timeout>();
     React.useEffect(() => {
         // this makes map scroll to center on mobile
@@ -61,9 +33,9 @@ const LandingWorldMap = () => {
         if (grad) {
             grad.style.opacity = '1';
         }
-        randomiseData();
+        randomizeData$.next(WorldCountryCodes);
         const id = setInterval(() => {
-            randomiseData();
+            randomizeData$.next(WorldCountryCodes);
         }, 3000);
         intervalRef.current = id;
         return () => {
@@ -85,21 +57,7 @@ const LandingWorldMap = () => {
         const idx = mapDt.findIndex((e) => e.id === id);
         // Map available
         if (idx > -1) {
-            setMap({
-                defaultFillColor: 'black',
-                mapStrokeColor: 'white',
-                mapBackgroundColor: 'black',
-                mapStrokeWidth: '1',
-                mapFillColor: '#ff677d',
-                mapData: [],
-                legendData: [],
-                legendTextColor: 'white',
-                hideStates: [],
-                hideLegend: false,
-                legendSmoothGradient: false,
-                hideSource: false,
-                sourceText: ''
-            });
+            mapStore.reset();
             router.push(`/map${mapDt[idx].link}`);
         }
     };

@@ -5,9 +5,8 @@ import { useRouter } from 'next/dist/client/router';
 import { ExportConfigType } from '@/typings/config';
 import fillAllMap from '@/lib/fillAllMap';
 import importLabelConfig from '@/lib/importLabelConfig';
-import { labelAtom } from '@/store/label.store';
-import { mapAtom } from '@/store/map.store';
-import { useAtom } from 'jotai';
+import { labelStore } from '@/store/label.store';
+import { mapStore } from '@/store/map.store';
 import { useToasts } from '@geist-ui/react';
 
 interface ExampleMapType {
@@ -27,8 +26,6 @@ const exampleData: ExampleMapType = {
 
 const LoadExample = () => {
     const router = useRouter();
-    const [, setMap] = useAtom(mapAtom);
-    const [, setLabel] = useAtom(labelAtom);
     const [, setToast] = useToasts();
     const successToast = () =>
         setToast({
@@ -47,10 +44,10 @@ const LoadExample = () => {
             const slug = router.query.data as string;
             const data: ExportConfigType = exampleData[slug];
             if (data) {
-                setMap(data.mapData);
+                mapStore.set(data.mapData);
                 fillAllMap(data.mapData.mapData, data.mapData.defaultFillColor);
                 const labData = importLabelConfig(data.labelData);
-                setLabel(labData);
+                labelStore.set(labData);
                 successToast();
             } else {
                 errorToast();
